@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Picture Bingo</title>
+  <style>
+    body { font-family: Arial; text-align: center; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 225px);
+      gap: 10px;
+      justify-content: center;
+      margin-top: 20px;
+    }
+    .cell {
+      border: 2px solid #333;
+      padding: 5px;
+      cursor: pointer;
+    }
+    .cell img {
+      width: 100%;
+    }
+    .marked {
+      background-color: lightgreen;
+    }
+    button {
+      margin: 5px;
+      padding: 10px 15px;
+      font-size: 16px;
+    }
+  </style>
+
+  <!-- Confetti Library -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+</head>
+<body>
+
+<h1>Picture Bingo</h1>
+<button onclick="drawImage()">Draw</button>
+<button onclick="restartGame()">Restart</button>
+<h2 id="current"></h2>
+
+<div class="grid" id="grid"></div>
+
+<script>
+const images = [
+  "images/dog.png",
+  "images/cat.png",
+  "images/cow.png",
+  "images/pig.png",
+  "images/rabbit.png",
+  "images/horse.png",
+  "images/rat.png",
+  "images/duck.png",
+  "images/sheep.png"
+];
+
+let drawn = [];
+let hasCelebrated = false;
+
+// Create grid
+const grid = document.getElementById("grid");
+
+images.forEach(src => {
+  const div = document.createElement("div");
+  div.classList.add("cell");
+
+  const img = document.createElement("img");
+  img.src = src;
+
+  div.appendChild(img);
+
+  div.onclick = () => {
+    div.classList.toggle("marked");
+    checkWin();
+  };
+
+  grid.appendChild(div);
+});
+
+// Draw random image
+function drawImage() {
+  const remaining = images.filter(img => !drawn.includes(img));
+  if (remaining.length === 0) return;
+
+  const pick = remaining[Math.floor(Math.random() * remaining.length)];
+  drawn.push(pick);
+
+  document.getElementById("current").innerText =
+    "Find: " + pick.split("/").pop().replace(".png", "");
+
+  // Auto-highlight
+  document.querySelectorAll(".cell img").forEach(img => {
+    if (img.src.includes(pick)) {
+      img.parentElement.classList.add("marked");
+    }
+  });
+
+  checkWin();
+}
+
+// Check all bingo win conditions
+function checkWin() {
+  if (hasCelebrated) return;
+
+  const cells = document.querySelectorAll(".cell");
+  const marked = Array.from(cells).map(cell =>
+    cell.classList.contains("marked")
+  );
+
+  const winningCombos = [
+    // Rows
+    [0,1,2],
+    [3,4,5],
+    [6,7,8],
+
+    // Columns
+    [0,3,6],
+    [1,4,7],
+    [2,5,8],
+
+    // Diagonals
+    [0,4,8],
+    [2,4,6]
+  ];
+
+  const hasWon = winningCombos.some(combo =>
+    combo.every(index => marked[index])
+  );
+
+  if (hasWon) {
+    hasCelebrated = true;
+    launchConfetti();
+    document.getElementById("current").innerText = "🎉 BINGO! 🎉";
+  }
+}
+
+// Confetti effect
+function launchConfetti() {
+  confetti({
+    particleCount: 200,
+    spread: 120,
+    origin: { y: 0.6 }
+  });
+}
+
+// Restart game
+function restartGame() {
+  drawn = [];
+  hasCelebrated = false;
+
+  document.getElementById("current").innerText = "";
+
+  document.querySelectorAll(".cell").forEach(cell => {
+    cell.classList.remove("marked");
+  });
+}
+</script>
+
+</body>
+</html>
